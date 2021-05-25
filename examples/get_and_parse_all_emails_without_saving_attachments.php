@@ -12,7 +12,7 @@
     use PhpImap\Exceptions\ConnectionException;
     use PhpImap\Mailbox;
 
-    $mailbox = new Mailbox(
+    new Mailbox(
         '{imap.gmail.com:993/imap/ssl}INBOX', // IMAP server and mailbox folder
         'some@gmail.com', // Username for the before configured mailbox
         '*********', // Password for the before configured username

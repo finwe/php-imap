@@ -178,7 +178,7 @@ final class Imap
     }
 
     /**
-     * @param false|resource $imap_stream
+     * @param resource $imap_stream
      *
      * @psalm-param value-of<self::CLOSE_FLAGS> $flag
      * @psalm-param 0|32768 $flag
@@ -887,7 +887,7 @@ final class Imap
     }
 
     /**
-     * @param false|resource $imap_stream
+     * @param resource $imap_stream
      *
      * @psalm-param value-of<self::SORT_CRITERIA> $criteria
      * @psalm-param 1|5|0|2|6|3|4 $criteria
@@ -992,12 +992,12 @@ final class Imap
      * @psalm-param value-of<self::TIMEOUT_TYPES> $timeout_type
      * @psalm-param 4|1|2|3 $timeout_type
      *
-     * @return true|int
+     * @return int|true
      */
     public static function timeout(
         int $timeout_type,
         int $timeout = -1
-    ) {
+    ): int|bool {
         \imap_errors(); // flush errors
 
         $result = \imap_timeout(

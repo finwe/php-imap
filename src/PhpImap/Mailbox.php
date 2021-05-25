@@ -406,22 +406,6 @@ class Mailbox
     }
 
     /**
-     * Sets / Changes the attempts / retries to connect.
-     */
-    public function setConnectionRetry(int $maxAttempts): void
-    {
-        $this->connectionRetry = $maxAttempts;
-    }
-
-    /**
-     * Sets / Changes the delay between each attempt / retry to connect.
-     */
-    public function setConnectionRetryDelay(int $milliseconds): void
-    {
-        $this->connectionRetryDelay = $milliseconds;
-    }
-
-    /**
      * Get IMAP mailbox connection stream.
      *
      * @param bool $forceConnection Initialize connection if it's not initialized
@@ -516,14 +500,6 @@ class Mailbox
     }
 
     /**
-     * Sets 'expunge on disconnect' parameter.
-     */
-    public function setExpungeOnDisconnect(bool $isEnabled): void
-    {
-        $this->expungeOnDisconnect = $isEnabled;
-    }
-
-    /**
      * Get information about the current mailbox.
      *
      * Returns the information in an object with following properties:
@@ -565,17 +541,6 @@ class Mailbox
     }
 
     /**
-     * Rename an existing mailbox from $oldName to $newName.
-     *
-     * @param string $oldName Current name of mailbox, which you want to rename (eg. 'PhpImap')
-     * @param string $newName New name of mailbox, to which you want to rename it (eg. 'PhpImapTests')
-     */
-    public function renameMailbox(string $oldName, string $newName): void
-    {
-        Imap::renamemailbox($this->getImapStream(), $this->getCombinedPath($oldName), $this->getCombinedPath($newName));
-    }
-
-    /**
      * Gets status information about the given mailbox.
      *
      * This function returns an object containing status information.
@@ -584,19 +549,6 @@ class Mailbox
     public function statusMailbox(): object
     {
         return Imap::status($this->getImapStream(), $this->imapPath, SA_ALL);
-    }
-
-    /**
-     * Gets listing the folders.
-     *
-     * This function returns an object containing listing the folders.
-     * The object has the following properties: messages, recent, unseen, uidnext, and uidvalidity.
-     *
-     * @return array listing the folders
-     */
-    public function getListingFolders(string $pattern = '*'): array
-    {
-        return Imap::listOfMailboxes($this->getImapStream(), $this->imapPath, $pattern);
     }
 
     /**
@@ -622,76 +574,6 @@ class Mailbox
     }
 
     /**
-     * Search the mailbox for emails from multiple, specific senders.
-     *
-     * @see Mailbox::searchMailboxFromWithOrWithoutDisablingServerEncoding()
-     *
-     * @return int[]
-     *
-     * @psalm-return list<int>
-     */
-    public function searchMailboxFrom(string $criteria, string $sender, string ...$senders): array
-    {
-        return $this->searchMailboxFromWithOrWithoutDisablingServerEncoding($criteria, false, $sender, ...$senders);
-    }
-
-    /**
-     * Search the mailbox for emails from multiple, specific senders whilst not using server encoding.
-     *
-     * @see Mailbox::searchMailboxFromWithOrWithoutDisablingServerEncoding()
-     *
-     * @return int[]
-     *
-     * @psalm-return list<int>
-     */
-    public function searchMailboxFromDisableServerEncoding(string $criteria, string $sender, string ...$senders): array
-    {
-        return $this->searchMailboxFromWithOrWithoutDisablingServerEncoding($criteria, true, $sender, ...$senders);
-    }
-
-    /**
-     * Search the mailbox using multiple criteria merging the results.
-     *
-     * @param string $single_criteria
-     * @param string ...$criteria
-     *
-     * @return int[]
-     *
-     * @psalm-return list<int>
-     */
-    public function searchMailboxMergeResults($single_criteria, ...$criteria)
-    {
-        return $this->searchMailboxMergeResultsWithOrWithoutDisablingServerEncoding(false, $single_criteria, ...$criteria);
-    }
-
-    /**
-     * Search the mailbox using multiple criteria merging the results.
-     *
-     * @param string $single_criteria
-     * @param string ...$criteria
-     *
-     * @return int[]
-     *
-     * @psalm-return list<int>
-     */
-    public function searchMailboxMergeResultsDisableServerEncoding($single_criteria, ...$criteria)
-    {
-        return $this->searchMailboxMergeResultsWithOrWithoutDisablingServerEncoding(false, $single_criteria, ...$criteria);
-    }
-
-    /**
-     * Save a specific body section to a file.
-     *
-     * @param int $mailId message number
-     *
-     * @see imap_savebody()
-     */
-    public function saveMail(int $mailId, string $filename = 'email.eml'): void
-    {
-        Imap::savebody($this->getImapStream(), $filename, $mailId, '', (SE_UID === $this->imapSearchOption) ? FT_UID : 0);
-    }
-
-    /**
      * Marks mails listed in mailId for deletion.
      *
      * @param int $mailId message number
@@ -701,34 +583,6 @@ class Mailbox
     public function deleteMail(int $mailId): void
     {
         Imap::delete($this->getImapStream(), $mailId, (SE_UID === $this->imapSearchOption) ? FT_UID : 0);
-    }
-
-    /**
-     * Moves mails listed in mailId into new mailbox.
-     *
-     * @param string|int $mailId  a range or message number
-     * @param string     $mailBox Mailbox name
-     *
-     * @see imap_mail_move()
-     */
-    public function moveMail($mailId, string $mailBox): void
-    {
-        Imap::mail_move($this->getImapStream(), $mailId, $mailBox, CP_UID);
-        $this->expungeDeletedMails();
-    }
-
-    /**
-     * Copies mails listed in mailId into new mailbox.
-     *
-     * @param string|int $mailId  a range or message number
-     * @param string     $mailBox Mailbox name
-     *
-     * @see imap_mail_copy()
-     */
-    public function copyMail($mailId, string $mailBox): void
-    {
-        Imap::mail_copy($this->getImapStream(), $mailId, $mailBox, CP_UID);
-        $this->expungeDeletedMails();
     }
 
     /**
@@ -747,58 +601,6 @@ class Mailbox
     public function markMailAsRead(int $mailId): void
     {
         $this->setFlag([$mailId], '\\Seen');
-    }
-
-    /**
-     * Remove the flag \Seen from a mail.
-     */
-    public function markMailAsUnread(int $mailId): void
-    {
-        $this->clearFlag([$mailId], '\\Seen');
-    }
-
-    /**
-     * Add the flag \Flagged to a mail.
-     */
-    public function markMailAsImportant(int $mailId): void
-    {
-        $this->setFlag([$mailId], '\\Flagged');
-    }
-
-    /**
-     * Add the flag \Seen to a mails.
-     *
-     * @param int[] $mailId
-     *
-     * @psalm-param list<int> $mailId
-     */
-    public function markMailsAsRead(array $mailId): void
-    {
-        $this->setFlag($mailId, '\\Seen');
-    }
-
-    /**
-     * Remove the flag \Seen from some mails.
-     *
-     * @param int[] $mailId
-     *
-     * @psalm-param list<int> $mailId
-     */
-    public function markMailsAsUnread(array $mailId): void
-    {
-        $this->clearFlag($mailId, '\\Seen');
-    }
-
-    /**
-     * Add the flag \Flagged to some mails.
-     *
-     * @param int[] $mailId
-     *
-     * @psalm-param list<int> $mailId
-     */
-    public function markMailsAsImportant(array $mailId): void
-    {
-        $this->setFlag($mailId, '\\Flagged');
     }
 
     /**
@@ -895,40 +697,6 @@ class Mailbox
     }
 
     /**
-     * Get headers for all messages in the defined mailbox,
-     * returns an array of string formatted with header info,
-     * one element per mail message.
-     *
-     * @see imap_headers()
-     */
-    public function getMailboxHeaders(): array
-    {
-        return Imap::headers($this->getImapStream());
-    }
-
-    /**
-     * Get information about the current mailbox.
-     *
-     * Returns an object with following properties:
-     *  Date - last change (current datetime)
-     *  Driver - driver
-     *  Mailbox - name of the mailbox
-     *  Nmsgs - number of messages
-     *  Recent - number of recent messages
-     *  Unread - number of unread messages
-     *  Deleted - number of deleted messages
-     *  Size - mailbox size
-     *
-     * @return object Object with info
-     *
-     * @see mailboxmsginfo
-     */
-    public function getMailboxInfo(): object
-    {
-        return Imap::mailboxmsginfo($this->getImapStream());
-    }
-
-    /**
      * Gets mails ids sorted by some criteria.
      *
      * Criteria can be one (and only one) of the following constants:
@@ -973,34 +741,6 @@ class Mailbox
     public function countMails(): int
     {
         return Imap::num_msg($this->getImapStream());
-    }
-
-    /**
-     * Return quota limit in KB.
-     *
-     * @param string $quota_root Should normally be in the form of which mailbox (i.e. INBOX)
-     */
-    public function getQuotaLimit(string $quota_root = 'INBOX'): int
-    {
-        $quota = $this->getQuota($quota_root);
-
-        /** @var int */
-        return isset($quota['STORAGE']['limit']) ? $quota['STORAGE']['limit'] : 0;
-    }
-
-    /**
-     * Return quota usage in KB.
-     *
-     * @param string $quota_root Should normally be in the form of which mailbox (i.e. INBOX)
-     *
-     * @return int|false FALSE in the case of call failure
-     */
-    public function getQuotaUsage(string $quota_root = 'INBOX')
-    {
-        $quota = $this->getQuota($quota_root);
-
-        /** @var int|false */
-        return isset($quota['STORAGE']['usage']) ? $quota['STORAGE']['usage'] : 0;
     }
 
     /**
@@ -1450,43 +1190,6 @@ class Mailbox
         $mailboxes = Imap::getmailboxes($this->getImapStream(), $this->imapPath, $search);
 
         return $this->possiblyGetMailboxes($mailboxes);
-    }
-
-    /**
-     * Get folders list.
-     */
-    public function getSubscribedMailboxes(string $search = '*'): array
-    {
-        /** @psalm-var array<int, scalar|array|object{name?:string}|resource|null> */
-        $mailboxes = Imap::getsubscribed($this->getImapStream(), $this->imapPath, $search);
-
-        return $this->possiblyGetMailboxes($mailboxes);
-    }
-
-    /**
-     * Subscribe to a mailbox.
-     *
-     * @throws Exception
-     */
-    public function subscribeMailbox(string $mailbox): void
-    {
-        Imap::subscribe(
-            $this->getImapStream(),
-            $this->getCombinedPath($mailbox)
-        );
-    }
-
-    /**
-     * Unsubscribe from a mailbox.
-     *
-     * @throws Exception
-     */
-    public function unsubscribeMailbox(string $mailbox): void
-    {
-        Imap::unsubscribe(
-            $this->getImapStream(),
-            $this->getCombinedPath($mailbox)
-        );
     }
 
     /**

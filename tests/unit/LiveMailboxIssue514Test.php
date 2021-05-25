@@ -105,7 +105,6 @@ class LiveMailboxIssue514Test extends AbstractLiveMailboxTest
             $serverEncoding,
         ]);
 
-        $result = null;
 
         try {
             $search = $mailbox->searchMailbox($search_criteria);
